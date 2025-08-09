@@ -1,85 +1,105 @@
----
 title: "Quickstart"
-description: "Create and retrieve a KYC hosted session in minutes"
----
+description: "Understand the hosted KYC flow and how to integrate it"
+## KYC in one minute
 
-## Get started in three steps
+- **Create a session**: You call `POST /api/v1/kyc/sessions` with your Bearer public key. You receive a `sessionId` and a `verificationUrl`.
+- **Send your user**: Redirect or link your user to the `verificationUrl` to complete the hosted verification flow.
+- **Check status**: You can `GET /api/v1/kyc/sessions/{sessionId}` to verify ownership and see the current `status`.
 
-Spin up a hosted KYC verification session and load the Verify flow.
+## Authentication
 
-### Step 1: Set up your local environment
+Use your public API key in the Authorization header. Public keys map to users in Firestore at `users.apiPublicKey`.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="key" title="Authentication">
-    Use your public API key in the `Authorization` header.
+```http
+Authorization: Bearer pb-YourPublicKey
+```
 
-    ```http
-    Authorization: Bearer pb-YourPublicKey
-    ```
+## Create a hosted session
 
-    Public keys map to users in Firestore under `users.apiPublicKey`.
-  </Accordion>
-</AccordionGroup>
+Optional body lets you add a return link and metadata to track your users.
 
-### Step 2: Create a hosted session
+```bash
+curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
+  -H "Authorization: Bearer pb-YourPublicKey" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redirectUrl": "https://yourapp.com/kyc/return",
+    "metadata": { "customerId": "12345" }
+  }'
+```
 
-<AccordionGroup>
-  <Accordion icon="rectangle-terminal" title="cURL example">
-    ```bash
-    curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
-      -H "Authorization: Bearer pb-YourPublicKey" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "redirectUrl": "https://yourapp.com/kyc/return",
-        "metadata": { "customerId": "12345" }
-      }'
-    ```
+Successful response (201):
 
-    Successful response includes `sessionId` and `verificationUrl`.
-  </Accordion>
-</AccordionGroup>
+```json
+{
+  "sessionId": "<session-id>",
+  "verificationUrl": "https://<host>/verify/<session-id>",
+  "workspaceId": "<workspace-id>",
+  "userId": "<uid>",
+  "status": "not_started",
+  "createdAt": "2025-08-09T10:00:00.000Z"
+}
+```
 
-### Step 3: Retrieve a session
+## Send the user to verify
 
-<Accordion icon="magnifying-glass" title="cURL example">
-  ```bash
-  curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
-    -H "Authorization: Bearer pb-YourPublicKey"
-  ```
+Open the `verificationUrl` in a browser or in-app webview. The hosted UI captures documents and face images, then invokes a server action to produce a structured verdict.
 
-  - 403 when requesting user doesn't own the session/workspace
-  - 404 when the session doesn't exist
-</Accordion>
+> The API does not expose this verdict directly; persist results in your backend if needed.
 
-## Next steps
+## Retrieve a session
 
-Now that you have your docs running, explore these key features:
+```bash
+curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
+  -H "Authorization: Bearer pb-YourPublicKey"
+```
+
+Example response:
+
+```json
+{
+  "sessionId": "<session-id>",
+  "workspaceId": "<workspace-id>",
+  "userId": "<uid>",
+  "status": "not_started",
+  "redirectUrl": null,
+  "metadata": { "customerId": "12345" },
+  "createdAt": "2025-08-09T10:00:00.000Z",
+  "updatedAt": "2025-08-09T10:05:00.000Z",
+  "verificationUrl": "https://<host>/verify/<session-id>"
+}
+```
+
+Authorization rules:
+
+- The requesting user must be the session owner (`userId`) OR the owner of the associated `workspaceId`.
+
+## Status lifecycle
+
+- Initial: `not_started`
+- Typical progression: `not_started` → `processing` → `completed` (or `failed`)
+- The Verify UI prevents reuse when `status === "completed"`.
+
+## Errors
+
+- 401 `{ "error": "missing_authorization" }` when header is absent
+- 401 `{ "error": "invalid_credentials" }` when public key is invalid
+- 403 `{ "error": "forbidden" }` when the user does not own the session/workspace
+- 404 `{ "error": "not_found" }` when session does not exist
+- 500 `{ "error": "internal_error", "message": "..." }` on server error
+
+## Hosts and CORS
+
+- Base host: `https://api.verisecid.com`
+- Served only on allowed hosts: `api.verisecid.com`, `localhost`, `127.0.0.1`
+- Override with env var: `API_ALLOWED_HOSTS=api.verisecid.com,localhost,127.0.0.1`
+- Disallowed hosts return `404` with `{ "error": "invalid_host" }`
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="Development" icon="wrench" href="/development">
-  Hosts, environment variables, and session lifecycle.
-</Card>
-
+  <Card title="Development" icon="wrench" href="/development">
+    Environment variables and security model.
+  </Card>
+  <Card title="API reference" icon="terminal" href="/api-reference/introduction">
+    Endpoint details and examples.
+  </Card>
 </CardGroup>
-
-## Host and CORS
-
-Base host is `https://api.verisecid.com`. CORS is enabled per handler.

@@ -1,58 +1,49 @@
----
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
----
+title: "KYC Overview"
+description: "How VerisecID hosted KYC works and how to integrate it"
+## What is a hosted KYC session?
 
-## VerisecID KYC API v1
+A hosted session is a short‑lived record that gives you a `verificationUrl` to send users through a secure identity verification flow. You create the session with your public API key and optionally include a `redirectUrl` and `metadata` to track your users.
 
-A fast way to spin up hosted KYC verification flows. Use your public API key to create and retrieve hosted verification sessions.
+<Steps>
+  <Step title="Create a session">
+    POST `/api/v1/kyc/sessions` with your Bearer public API key. Response includes `sessionId` and `verificationUrl`.
+  </Step>
+  <Step title="Send user to verificationUrl">
+    The hosted UI collects document and facial biometrics securely.
+  </Step>
+  <Step title="Retrieve the session">
+    GET `/api/v1/kyc/sessions/{sessionId}` to check ownership and status.
+  </Step>
+  <Step title="Handle results">
+    The hosted UI triggers a server action to produce a verdict. Store outcomes in your backend if needed.
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Quick actions"
-    icon="rocket"
-    href="/quickstart"
-  >
-    Create a session, retrieve it, and try cURL examples in minutes.
-  </Card>
-  <Card
-    title="Development guide"
-    icon="wrench"
-    href="/development"
-  >
-    Hosts, authentication, environment variables, and session lifecycle.
-  </Card>
-  <Card
-    title="Authentication"
-    icon="key"
-    href="/quickstart"
-  >
-    How to use your Bearer public API key.
-  </Card>
-  <Card
-    title="API reference"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Endpoints and examples.
-  </Card>
-</Columns>
+## Authentication
 
-## Try it now
+Use your public API key in the Authorization header. Keys map to users in Firestore under `users.apiPublicKey`.
 
-Create a hosted session and get back a `verificationUrl` that you can send users to.
-
-```bash Create a session
-curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
-  -H "Authorization: Bearer pb-YourPublicKey" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "redirectUrl": "https://yourapp.com/kyc/return",
-    "metadata": { "customerId": "12345" }
-  }'
+```http
+Authorization: Bearer pb-YourPublicKey
 ```
 
-```bash Get a session
-curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
-  -H "Authorization: Bearer pb-YourPublicKey"
-```
+## Hosts and security
+
+Requests are served only on allowed hosts: `api.verisecid.com`, `localhost`, `127.0.0.1`. Override with `API_ALLOWED_HOSTS` (comma‑separated). Disallowed hosts return `404` with `{ "error": "invalid_host" }`.
+
+## Endpoints
+
+- Create session: `POST /api/v1/kyc/sessions`
+- Get session: `GET /api/v1/kyc/sessions/{sessionId}`
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Understand the flow and see concrete examples.
+  </Card>
+  <Card title="Development" icon="wrench" href="/development">
+    Hosts, auth, environment variables, and lifecycle.
+  </Card>
+  <Card title="API reference" icon="terminal" href="/api-reference/introduction">
+    Endpoint docs and examples.
+  </Card>
+</CardGroup>
