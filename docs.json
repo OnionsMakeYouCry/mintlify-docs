@@ -8,6 +8,14 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
+  "api": {
+    "baseUrl": "https://api.verisecid.com",
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization",
+      "inputPrefix": "Bearer "
+    }
+  },
   "navigation": {
     "tabs": [
       {
@@ -40,12 +48,10 @@
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Endpoints",
             "pages": [
-              "api-reference/endpoint/get",
               "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/endpoint/get"
             ]
           }
         ]

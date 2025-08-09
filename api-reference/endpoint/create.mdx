@@ -1,4 +1,53 @@
+title: 'Create KYC Session'
+description: 'Create a hosted verification session and receive a verificationUrl'
 ---
-title: 'Create Plant'
-openapi: 'POST /plants'
+
+## Endpoint
+
+`POST /api/v1/kyc/sessions`
+
+## Authentication
+
+```http
+Authorization: Bearer pb-YourPublicKey
+```
+
+## Request body (optional)
+
+```json
+{
+  "redirectUrl": "https://yourapp.com/kyc/return",
+  "metadata": { "customerId": "12345" }
+}
+```
+
+## cURL
+
+```bash
+curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
+  -H "Authorization: Bearer pb-YourPublicKey" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redirectUrl": "https://yourapp.com/kyc/return",
+    "metadata": { "customerId": "12345" }
+  }'
+```
+
+## Success response (201)
+
+```json
+{
+  "sessionId": "<session-id>",
+  "verificationUrl": "https://<host>/verify/<session-id>",
+  "workspaceId": "<workspace-id>",
+  "userId": "<uid>",
+  "status": "not_started",
+  "createdAt": "2025-08-09T10:00:00.000Z"
+}
+```
+
+## Errors
+
+- 401 missing/invalid auth
+- 500 internal_error
 ---
