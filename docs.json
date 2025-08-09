@@ -8,14 +8,6 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
-  "api": {
-    "baseUrl": "https://api.verisecid.com",
-    "auth": {
-      "method": "bearer",
-      "name": "Authorization",
-      "inputPrefix": "Bearer "
-    }
-  },
   "navigation": {
     "tabs": [
       {
@@ -42,17 +34,14 @@
         "tab": "API reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
             ]
           },
           {
-            "group": "Endpoints",
-            "pages": [
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/get"
-            ]
+            "group": "KYC API",
+            "openapi": "api-reference/openapi.json"
           }
         ]
       }
@@ -112,5 +101,15 @@
       "github": "https://github.com/mintlify",
       "linkedin": "https://linkedin.com/company/mintlify"
     }
+  },
+  "api": {
+    "baseUrl": "https://api.verisecid.com",
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization",
+      "inputPrefix": "Bearer "
+    },
+    "playground": { "mode": "show" },
+    "maintainOrder": true
   }
 }

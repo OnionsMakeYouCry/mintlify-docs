@@ -1,31 +1,25 @@
 title: 'Introduction'
-description: 'KYC API base URL, authentication, and endpoints overview'
+description: 'Interactive API playground and KYC endpoints generated from OpenAPI'
+
+## Overview
+
+The API reference below is generated from our OpenAPI spec and includes an interactive playground to try requests directly from the docs. We configure the base URL and Bearer auth in `docs.json`.
+
+See Mintlify’s playground guide for details: [API Playground Overview](https://mintlify.com/docs/api-playground/overview).
+
 ## Base URL
 
 `https://api.verisecid.com`
 
-All endpoints are under `/api/v1/kyc/...`.
-
 ## Authentication
 
-Use your public API key in the Authorization header:
+All endpoints require a Bearer token with your public API key.
 
 ```http
 Authorization: Bearer pb-YourPublicKey
 ```
 
-Public keys map to users in Firestore at `users.apiPublicKey`.
-
 ## Endpoints
 
-- Create hosted session — `POST /api/v1/kyc/sessions`
-- Get session — `GET /api/v1/kyc/sessions/{sessionId}`
-
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Create a session and retrieve it in minutes.
-  </Card>
-  <Card title="Development" icon="wrench" href="/development">
-    Hosts, CORS, environment, and lifecycle.
-  </Card>
-</CardGroup>
+- Create session: `POST /api/v1/kyc/sessions`
+- Get session: `GET /api/v1/kyc/sessions/{sessionId}`
