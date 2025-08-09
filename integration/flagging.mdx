@@ -1,0 +1,67 @@
+---
+title: "Flagging"
+description: "How we flag sessions and how to act on them"
+icon: "flag"
+---
+
+Flagging helps you apply additional review or automate decisions based on verification signals. You can use flags to gate access, trigger secondary review, or escalate to your risk team.
+
+## What gets flagged?
+
+Examples of signals that may raise a flag:
+
+- Inconsistent or unreadable document fields
+- Face capture confidence below threshold
+- Reused session attempts or suspected replay
+- Mismatch between document and selfie
+
+> Specific heuristics can evolve; treat flags as guidance to drive your own policy.
+
+## Where to read flags
+
+- Webhook payloads can include a `flags` array with high‑level reasons
+- Your own datastore (recommended): persist flags alongside session outcomes
+
+### Example enriched payload
+
+```json
+{
+  "type": "kyc.session.completed",
+  "createdAt": "2025-08-09T10:06:00.000Z",
+  "data": {
+    "sessionId": "sess_123",
+    "status": "completed",
+    "flags": [
+      { "code": "FACE_LOW_CONFIDENCE", "severity": "medium" },
+      { "code": "DOC_GLARE", "severity": "low" }
+    ]
+  }
+}
+```
+
+## Acting on flags
+
+- Auto‑approve when no flags and status is `completed`
+- Route to manual review for medium/high severity flags
+- Auto‑deny on critical flags (define per policy)
+
+### Pseudocode
+
+```ts
+type Flag = { code: string; severity: 'low' | 'medium' | 'high' };
+
+function decide(status: 'completed' | 'failed', flags: Flag[]) {
+  if (status !== 'completed') return 'deny';
+  const severities = new Set(flags.map(f => f.severity));
+  if (severities.has('high')) return 'deny';
+  if (severities.has('medium')) return 'review';
+  return 'approve';
+}
+```
+
+## Best practices
+
+- Log all flag decisions with sessionId for auditability
+- Keep your policy centrally managed and versioned
+- Periodically review false positives/negatives and adjust thresholds
+

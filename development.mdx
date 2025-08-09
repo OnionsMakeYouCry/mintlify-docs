@@ -1,7 +1,5 @@
----
 title: 'Development'
-description: 'Environment, hosts, auth, and local preview for KYC API'
----
+description: 'KYC integration details: hosts, auth, environment, lifecycle'
 
 <Info>
   **Prerequisites**:
@@ -10,28 +8,13 @@ description: 'Environment, hosts, auth, and local preview for KYC API'
   - A VerisecID public API key (e.g., `pb-xxxxx`)
 </Info>
 
-Follow these steps to install and run Mintlify on your operating system.
+## Authentication
 
-<Steps>
-<Step title="Install the Mintlify CLI">
+Pass your public key as a Bearer token. Keys map to users in Firestore under `users.apiPublicKey`.
 
-```bash
-npm i -g mint
+```http
+Authorization: Bearer pb-YourPublicKey
 ```
-</Step>
-
-<Step title="Preview locally">
-
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
-
-```bash
-mint dev
-```
-
-A local preview of your documentation will be available at `http://localhost:3000`.
-
-</Step>
-</Steps>
 
 ## Hosts and CORS
 
@@ -49,43 +32,16 @@ API_ALLOWED_HOSTS=api.verisecid.com,localhost,127.0.0.1
 
 When a host is not allowed, handlers return `404` with `{ "error": "invalid_host" }`.
 
-## Custom ports
+## Endpoints
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+- Create session: `POST /api/v1/kyc/sessions`
+- Get session: `GET /api/v1/kyc/sessions/{sessionId}`
 
-```bash
-mint dev --port 3333
-```
+## Access control
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
-
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
-
-## Authentication
-
-Pass your public key as a Bearer token. Keys map to users in Firestore under `users.apiPublicKey`.
-
-```http
-Authorization: Bearer pb-YourPublicKey
-```
-
-## Mintlify versions
-
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
-
-```bash
-npm mint update
-```
-
-## Validating links
-
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
-
-```bash
-mint broken-links
-```
+- 401 `{ "error": "missing_authorization" }` when header is absent
+- 401 `{ "error": "invalid_credentials" }` when public key is invalid
+- 403 `{ "error": "forbidden" }` when the user does not own the session/workspace
 
 ## Environment variables
 
@@ -99,25 +55,15 @@ mint broken-links
 - Typical progression: `not_started` → `processing` → `completed` (or `failed`)
 - Verify UI prevents reuse when `status === "completed"`.
 
-## Code formatting
+## Operational notes
 
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
+- Base host: `https://api.verisecid.com`
+- Allowed hosts: `api.verisecid.com`, `localhost`, `127.0.0.1`
+- Override with env var: `API_ALLOWED_HOSTS=api.verisecid.com,localhost,127.0.0.1`
+- Disallowed hosts return `404` with `{ "error": "invalid_host" }`
 
-## Troubleshooting
+## Session lifecycle
 
-<AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
-
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
-  </Accordion>
-
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
-  </Accordion>
-</AccordionGroup>
-
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+- Initial: `not_started`
+- Typical progression: `not_started` → `processing` → `completed` (or `failed`)
+- Verify UI prevents reuse when `status === "completed"`.

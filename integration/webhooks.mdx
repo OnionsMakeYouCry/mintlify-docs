@@ -1,0 +1,81 @@
+---
+title: "Webhooks"
+description: "Receive verification events for hosted KYC sessions"
+icon: "link"
+---
+
+Webhooks let your backend react to verification events that occur in the hosted flow. After a user completes the Verify UI, we send an event to your webhook endpoint with the session metadata and a high‑level outcome.
+
+## Event delivery
+
+- Sent as JSON over HTTPS to your configured endpoint
+- Retries with exponential backoff on non‑2xx responses
+- Recommended timeout: 10s
+- Secure with a shared secret or signature header
+
+## Example payload
+
+```json
+{
+  "type": "kyc.session.completed",
+  "createdAt": "2025-08-09T10:06:00.000Z",
+  "data": {
+    "sessionId": "sess_123",
+    "workspaceId": "ws_456",
+    "userId": "user_789",
+    "status": "completed",
+    "metadata": { "customerId": "12345" },
+    "verificationUrl": "https://api.verisecid.com/verify/sess_123"
+  }
+}
+```
+
+> We do not include raw images or PII in webhook payloads. Store final decisions or derived signals in your own datastore.
+
+## Recommended handler
+
+```typescript
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).end();
+
+  // Verify signature or secret if configured
+  const event = req.body as {
+    type: string;
+    createdAt: string;
+    data: {
+      sessionId: string;
+      status: 'completed' | 'failed' | 'processing' | 'not_started';
+      workspaceId: string;
+      userId: string;
+      metadata?: Record<string, unknown> | null;
+    };
+  };
+
+  switch (event.type) {
+    case 'kyc.session.completed':
+      // Upsert verification outcome for sessionId
+      break;
+    case 'kyc.session.failed':
+      // Record failure reason and notify team if needed
+      break;
+    default:
+      // Ignore unknown events
+  }
+
+  return res.status(200).json({ received: true });
+}
+```
+
+## Event types
+
+- `kyc.session.completed` — The hosted flow completed successfully
+- `kyc.session.failed` — The hosted flow ended with a failure
+- `kyc.session.processing` — The hosted flow started processing
+
+## Testing webhooks
+
+- Use a tool like `ngrok` to expose your local endpoint
+- Replay example payloads with `curl` during development
+
