@@ -1,12 +1,13 @@
 ---
 title: 'Development'
-description: 'Preview changes locally to update your docs'
+description: 'Environment, hosts, auth, and local preview for KYC API'
 ---
 
 <Info>
   **Prerequisites**:
   - Node.js version 19 or higher
   - A docs repository with a `docs.json` file
+  - A VerisecID public API key (e.g., `pb-xxxxx`)
 </Info>
 
 Follow these steps to install and run Mintlify on your operating system.
@@ -32,6 +33,22 @@ A local preview of your documentation will be available at `http://localhost:300
 </Step>
 </Steps>
 
+## Hosts and CORS
+
+API requests are served only when the Host header matches an allowlist.
+
+Default allowed hosts:
+
+- `api.verisecid.com`, `localhost`, `127.0.0.1`
+
+Override with env var:
+
+```bash
+API_ALLOWED_HOSTS=api.verisecid.com,localhost,127.0.0.1
+```
+
+When a host is not allowed, handlers return `404` with `{ "error": "invalid_host" }`.
+
 ## Custom ports
 
 By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
@@ -44,6 +61,14 @@ If you attempt to run Mintlify on a port that's already in use, it will use the 
 
 ```md
 Port 3000 is already in use. Trying 3001 instead.
+```
+
+## Authentication
+
+Pass your public key as a Bearer token. Keys map to users in Firestore under `users.apiPublicKey`.
+
+```http
+Authorization: Bearer pb-YourPublicKey
 ```
 
 ## Mintlify versions
@@ -62,13 +87,17 @@ The CLI can assist with validating links in your documentation. To identify any 
 mint broken-links
 ```
 
-## Deployment
+## Environment variables
 
-If the deployment is successful, you should see the following:
+- `API_ALLOWED_HOSTS` (optional) — comma-separated hostnames allowed for `/api/*`.
+- Firebase client (for app UI) requires standard `NEXT_PUBLIC_FIREBASE_*` variables.
+- Server-side verification actions may require AI provider keys (e.g., `OPENAI_API_KEY`).
 
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
+## Session lifecycle
+
+- Initial: `not_started`
+- Typical progression: `not_started` → `processing` → `completed` (or `failed`)
+- Verify UI prevents reuse when `status === "completed"`.
 
 ## Code formatting
 

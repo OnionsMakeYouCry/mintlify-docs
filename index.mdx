@@ -3,95 +3,56 @@ title: "Introduction"
 description: "Welcome to the new home for your documentation"
 ---
 
-## Setting up
+## VerisecID KYC API v1
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+A fast way to spin up hosted KYC verification flows. Use your public API key to create and retrieve hosted verification sessions.
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
+    title="Quick actions"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Create a session, retrieve it, and try cURL examples in minutes.
+  </Card>
+  <Card
+    title="Development guide"
+    icon="wrench"
     href="/development"
   >
-    Edit your docs locally and preview them in real time.
+    Hosts, authentication, environment variables, and session lifecycle.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Authentication"
+    icon="key"
+    href="/quickstart"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    How to use your Bearer public API key.
   </Card>
   <Card
-    title="API documentation"
+    title="API reference"
     icon="terminal"
     href="/api-reference/introduction"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    Endpoints and examples.
   </Card>
 </Columns>
 
-## Create beautiful pages
+## Try it now
 
-Everything you need to create world-class documentation.
+Create a hosted session and get back a `verificationUrl` that you can send users to.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+```bash Create a session
+curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
+  -H "Authorization: Bearer pb-YourPublicKey" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redirectUrl": "https://yourapp.com/kyc/return",
+    "metadata": { "customerId": "12345" }
+  }'
+```
 
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+```bash Get a session
+curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
+  -H "Authorization: Bearer pb-YourPublicKey"
+```
