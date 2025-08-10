@@ -11,10 +11,11 @@
   "security": [{ "bearerAuth": [] }],
   "tags": [
     { "name": "Hosted sessions", "description": "Create and manage hosted verification sessions" },
-    { "name": "Direct verification", "description": "Run verification with provided images using a secret key" }
+    { "name": "Direct verification", "description": "Run verification with provided images using a secret key" },
+    { "name": "Webhooks", "description": "Receive verification events and test deliveries" }
   ],
   "paths": {
-    "/api/v1/kyc/sessions": {
+    "/v1/kyc/sessions": {
       "post": {
         "summary": "Create hosted KYC session",
         "description": "Creates a session and returns a verificationUrl to direct users to the hosted verification flow.",
@@ -47,7 +48,7 @@
         }
       }
     },
-    "/api/v1/kyc/sessions/{sessionId}": {
+    "/v1/kyc/sessions/{sessionId}": {
       "get": {
         "summary": "Get hosted KYC session",
         "description": "Returns a session by ID when owned by the requesting user or their workspace.",
@@ -77,7 +78,7 @@
       }
     }
     ,
-    "/api/v1/kyc/verify": {
+    "/v1/kyc/verify": {
       "post": {
         "summary": "Direct verification (non-session)",
         "description": "Runs verification directly with provided images. Use your secret key (users.apiSecretKey or workspaces.apiSecretKey).",
@@ -122,6 +123,86 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
           "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
+    ,
+    "/v1/kyc/webhooks/test": {
+      "post": {
+        "summary": "Trigger a test webhook",
+        "description": "Sends a test event to the workspace-configured webhook URL. Returns 200 with an `{ ok }` indicator regardless of delivery outcome.",
+        "tags": ["Webhooks"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": { "type": "string" }
+                },
+                "required": ["workspaceId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delivery attempted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "status": { "type": ["integer", "null"] },
+                    "error": { "type": ["string", "null"] }
+                  },
+                  "required": ["ok"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kyc/submissions/notify": {
+      "post": {
+        "summary": "Notify webhook delivery (internal)",
+        "description": "Internal fanout to deliver a submission event to the workspace webhook. Middleware‑exempt. Loads session + submission and attempts delivery.",
+        "tags": ["Webhooks"],
+        "security": [],
+        "deprecated": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "sessionId": { "type": "string" } },
+                "required": ["sessionId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fanout attempted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "delivered": { "type": ["boolean", "null"] },
+                    "status": { "type": ["integer", "null"] }
+                  },
+                  "required": ["ok"]
+                }
+              }
+            }
+          }
         }
       }
     }

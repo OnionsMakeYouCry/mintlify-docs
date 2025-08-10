@@ -2,9 +2,9 @@ title: "Quickstart"
 description: "Understand the hosted KYC flow and how to integrate it"
 ## KYC in one minute
 
-- **Create a session**: You call `POST /api/v1/kyc/sessions` with your Bearer public key. You receive a `sessionId` and a `verificationUrl`.
+- **Create a session**: You call `POST /v1/kyc/sessions` with your Bearer public key. You receive a `sessionId` and a `verificationUrl`.
 - **Send your user**: Redirect or link your user to the `verificationUrl` to complete the hosted verification flow.
-- **Check status**: You can `GET /api/v1/kyc/sessions/{sessionId}` to verify ownership and see the current `status`.
+- **Check status**: You can `GET /v1/kyc/sessions/{sessionId}` to verify ownership and see the current `status`.
 
 ## Authentication
 
@@ -19,7 +19,7 @@ Authorization: Bearer pb-YourPublicKey
 Optional body lets you add a return link and metadata to track your users.
 
 ```bash
-curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
+curl -X POST "https://api.verisecid.com/v1/kyc/sessions" \
   -H "Authorization: Bearer pb-YourPublicKey" \
   -H "Content-Type: application/json" \
   -d '{
@@ -50,7 +50,7 @@ Open the `verificationUrl` in a browser or in-app webview. The hosted UI capture
 ## Retrieve a session
 
 ```bash
-curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
+curl -X GET "https://api.verisecid.com/v1/kyc/sessions/SESSION_ID" \
   -H "Authorization: Bearer pb-YourPublicKey"
 ```
 

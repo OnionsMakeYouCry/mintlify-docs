@@ -1,81 +1,131 @@
----
 title: "Webhooks"
-description: "Receive verification events for hosted KYC sessions"
+description: "Receive submission and verification events for hosted KYC sessions"
 icon: "link"
----
 
-Webhooks let your backend react to verification events that occur in the hosted flow. After a user completes the Verify UI, we send an event to your webhook endpoint with the session metadata and a high‑level outcome.
+Webhooks notify your server about submission creation and final verification outcomes for hosted sessions.
+
+## Configure
+
+- Enable webhooks in Console → Workspace Settings → Notifications
+- Set `webhookUrl` (HTTPS)
+- A signing `webhookSecret` is stored per workspace
+- Choose events to receive
+
+## Security
+
+Each request includes an HMAC signature header using your `webhookSecret`.
+
+```
+X-KYC-Signature: sha256=<hex-hmac-of-body>
+```
+
+Verify the signature by recomputing HMAC‑SHA256 over the exact raw body JSON string and comparing constant‑time to the header value.
 
 ## Event delivery
 
 - Sent as JSON over HTTPS to your configured endpoint
-- Retries with exponential backoff on non‑2xx responses
-- Recommended timeout: 10s
-- Secure with a shared secret or signature header
+- At‑least‑once delivery — de‑duplicate using the `id` field
+- Events are filtered by your workspace `webhookEvents` allow‑list
+- Monitor deliveries in your logs; retries/backoff may be added in the future
 
-## Example payload
+## Event types
+
+- `submission.created` — Emitted immediately after a submission is persisted
+- `verification.completed` — Hosted session finished with pass
+- `verification.failed` — Hosted session finished with fail
+
+## Payload shape
 
 ```json
 {
-  "type": "kyc.session.completed",
-  "createdAt": "2025-08-09T10:06:00.000Z",
+  "type": "submission.created | verification.completed | verification.failed",
+  "id": "<eventType>:<submissionId>",
+  "timestamp": "2025-08-10T21:50:43.235Z",
   "data": {
-    "sessionId": "sess_123",
-    "workspaceId": "ws_456",
-    "userId": "user_789",
-    "status": "completed",
-    "metadata": { "customerId": "12345" },
-    "verificationUrl": "https://api.verisecid.com/verify/sess_123"
+    "session": {
+      "id": "<sessionId>",
+      "status": "not_started | processing | completed | failed",
+      "redirectUrl": "https://...",
+      "metadata": {},
+      "createdAt": { "_seconds": 0, "_nanoseconds": 0 },
+      "updatedAt": { "_seconds": 0, "_nanoseconds": 0 },
+      "images": {
+        "documentFrontUrl": "https://...",
+        "documentBackUrl": "https://...",
+        "selfieUrls": ["https://...", "https://...", "https://..."]
+      }
+    },
+    "submission": {
+      "id": "<submissionId>",
+      "sessionId": "<sessionId>",
+      "workspaceId": "<workspaceId>",
+      "pass": true,
+      "expectedDocumentType": "passport | id-card",
+      "detectedDocumentType": "passport | id-card | unknown",
+      "document": {},
+      "face": {},
+      "overall": { "pass": true, "reasons": [], "user_message": null },
+      "createdAt": { "_seconds": 0, "_nanoseconds": 0 }
+    }
   }
 }
 ```
 
-> We do not include raw images or PII in webhook payloads. Store final decisions or derived signals in your own datastore.
+> We do not include raw image bytes in webhook payloads. Use the signed URLs for access control or copy to your storage if needed.
 
-## Recommended handler
+## Test delivery
+
+Use the API to trigger a test event:
+
+```
+POST /api/v1/kyc/webhooks/test
+```
+
+Body:
+
+```json
+{ "workspaceId": "<workspaceId>" }
+```
+
+Response (200): `{ ok: true, status: 200 }` for successful delivery. Failures respond with `{ ok: false, ... }` but still HTTP 200.
+
+## Example handler
 
 ```typescript
 import type { NextApiRequest, NextApiResponse } from 'next';
+import crypto from 'crypto';
+
+function verifySignature(rawBody: string, header: string | undefined, secret: string) {
+  if (!header) return false;
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(header));
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // Verify signature or secret if configured
-  const event = req.body as {
-    type: string;
-    createdAt: string;
-    data: {
-      sessionId: string;
-      status: 'completed' | 'failed' | 'processing' | 'not_started';
-      workspaceId: string;
-      userId: string;
-      metadata?: Record<string, unknown> | null;
-    };
-  };
+  const signature = req.headers['x-kyc-signature'] as string | undefined;
+  const secret = process.env.KYC_WEBHOOK_SECRET || '';
+  const raw = (req as any).rawBody ?? JSON.stringify(req.body);
+  if (!verifySignature(raw, signature, secret)) return res.status(401).json({ error: 'invalid_signature' });
 
-  switch (event.type) {
-    case 'kyc.session.completed':
-      // Upsert verification outcome for sessionId
+  const evt = req.body as { type: string; id: string; timestamp: string; data: any };
+
+  // idempotent handling
+  // upsert evt.id to a processed store before acting
+
+  switch (evt.type) {
+    case 'submission.created':
       break;
-    case 'kyc.session.failed':
-      // Record failure reason and notify team if needed
+    case 'verification.completed':
+      break;
+    case 'verification.failed':
       break;
     default:
-      // Ignore unknown events
+      // ignore
   }
 
   return res.status(200).json({ received: true });
 }
 ```
-
-## Event types
-
-- `kyc.session.completed` — The hosted flow completed successfully
-- `kyc.session.failed` — The hosted flow ended with a failure
-- `kyc.session.processing` — The hosted flow started processing
-
-## Testing webhooks
-
-- Use a tool like `ngrok` to expose your local endpoint
-- Replay example payloads with `curl` during development
 

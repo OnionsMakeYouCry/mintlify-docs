@@ -3,6 +3,7 @@
 Base host: `https://api.verisecid.com`
 
 - All endpoints are under `/api/v1/kyc/...`.
+- Version-first URLs are also supported on API hosts: `/v1/...` will 308-redirect to `/api/v1/...`.
 - Only requests targeting allowed API hosts are served (default allowlist includes `api.verisecid.com`, `localhost`, `127.0.0.1`). You can override via `API_ALLOWED_HOSTS` (comma-separated).
 - CORS is enabled for these endpoints (methods vary per handler; see below).
 
@@ -41,7 +42,7 @@ Firestore collections used by the API:
   - `redirectUrl?: string | null`
   - `metadata?: Record<string, unknown> | null`
 
-On session creation, if the user has no workspace, a default workspace is created and the user’s API keys are migrated onto it. The user’s `currentWorkspaceId` is set/updated.
+Prerequisite: a workspace must already exist and contain API keys (`apiPublicKey`, `apiSecretKey`). No default workspace is created by the API.
 
 ---
 
@@ -230,3 +231,110 @@ When a host is not allowed, handlers return `404` with `{ "error": "invalid_host
 ## Verification UI
 
 The `verificationUrl` points to the hosted flow at `/verify/{sessionId}`. The UI captures document and face images, then invokes a server action to produce a structured verdict. The API does not expose that verdict; your backend can store results to `kyc_hosted_sessions` or another collection as needed.
+
+---
+
+## Webhooks
+
+VerisecID can notify your server about submission creation and final verification outcomes for hosted sessions.
+
+### Configure webhooks
+
+- In the Console → Workspace Settings → Notifications:
+  - Enable webhooks
+  - Set `webhookUrl` (HTTPS)
+  - A signing `webhookSecret` is stored per workspace
+  - Choose events to receive
+
+Supported events:
+
+- `submission.created` (emitted immediately after a submission is persisted)
+- `verification.completed` (emitted when a session finishes with pass)
+- `verification.failed` (emitted when a session finishes with fail)
+
+Delivery semantics:
+
+- Events are filtered by your workspace `webhookEvents` allow-list
+- If the selected final-status event is not allowed, `submission.created` is sent (when allowed)
+- At-least-once delivery; receivers should de-duplicate using the `id` field
+- No retry/backoff yet (coming soon). You can monitor deliveries in `kyc_webhook_deliveries` if you use Firestore directly
+
+Security:
+
+- Each request includes an HMAC signature header using your `webhookSecret`:
+
+```
+X-KYC-Signature: sha256=<hex-hmac-of-body>
+```
+
+Verify the signature by recomputing HMAC-SHA256 over the exact raw body JSON string and comparing constant-time to the header value.
+
+### Event payload
+
+POST requests send a JSON body with this structure:
+
+```json
+{
+  "type": "submission.created | verification.completed | verification.failed",
+  "id": "<eventType>:<submissionId>",
+  "timestamp": "2025-08-10T21:50:43.235Z",
+  "data": {
+    "session": {
+      "id": "<sessionId>",
+      "status": "not_started | processing | completed | failed",
+      "redirectUrl": "https://...",
+      "metadata": { },
+      "createdAt": { "_seconds": 0, "_nanoseconds": 0 },
+      "updatedAt": { "_seconds": 0, "_nanoseconds": 0 },
+      "images": {
+        "documentFrontUrl": "https://...",
+        "documentBackUrl": "https://...",
+        "selfieUrls": ["https://...", "https://...", "https://..."]
+      }
+    },
+    "submission": {
+      "id": "<submissionId>",
+      "sessionId": "<sessionId>",
+      "workspaceId": "<workspaceId>",
+      "pass": true,
+      "expectedDocumentType": "passport | id-card",
+      "detectedDocumentType": "passport | id-card | unknown",
+      "document": { /* structured fields about the document */ },
+      "face": { /* structured fields about the face match */ },
+      "overall": { "pass": true, "reasons": [], "user_message": null },
+      "createdAt": { "_seconds": 0, "_nanoseconds": 0 }
+    }
+  }
+}
+```
+
+Notes:
+
+- The session object intentionally excludes `workspaceId` and `userId` for privacy. The `submission.workspaceId` is included as a non-sensitive identifier.
+- Firestore timestamps are sent in `{ _seconds, _nanoseconds }` format. Convert to ISO as needed.
+
+### Test your webhook
+
+You can trigger a test event from the Console or via API:
+
+POST `/api/v1/kyc/webhooks/test`
+
+- Auth: none
+- CORS: `POST, OPTIONS`
+- Body:
+
+```json
+{ "workspaceId": "<workspaceId>" }
+```
+
+Response (200): `{ ok: true, status: 200 }` for successful delivery. Failures respond with `{ ok: false, ... }` but still HTTP 200.
+
+### Programmatic notify (internal)
+
+POST `/api/v1/kyc/submissions/notify`
+
+- Auth: none (middleware-exempt for webhook fanout)
+- CORS: `POST, OPTIONS`
+- Body: `{ "sessionId": "<sessionId>" }`
+- Behavior: loads session, latest submission, workspace webhook config, and attempts delivery. Returns 200 with `{ ok, delivered, status? }`.
+

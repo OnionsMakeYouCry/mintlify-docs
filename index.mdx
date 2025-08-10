@@ -8,13 +8,13 @@ A hosted session is a short‑lived record that gives you a `verificationUrl` to
 
 <Steps>
   <Step title="Create a session">
-    POST `/api/v1/kyc/sessions` with your Bearer public API key. Response includes `sessionId` and `verificationUrl`.
+    POST `/v1/kyc/sessions` with your Bearer public API key. Response includes `sessionId` and `verificationUrl`.
   </Step>
   <Step title="Send user to verificationUrl">
     The hosted UI collects document and facial biometrics securely.
   </Step>
   <Step title="Retrieve the session">
-    GET `/api/v1/kyc/sessions/{sessionId}` to check ownership and status.
+    GET `/v1/kyc/sessions/{sessionId}` to check ownership and status.
   </Step>
   <Step title="Handle results">
     The hosted UI triggers a server action to produce a verdict. Store outcomes in your backend if needed.
@@ -35,8 +35,8 @@ Requests are served only on allowed hosts: `api.verisecid.com`, `localhost`, `12
 
 ## Endpoints
 
-- Create session: `POST /api/v1/kyc/sessions`
-- Get session: `GET /api/v1/kyc/sessions/{sessionId}`
+- Create session: `POST /v1/kyc/sessions`
+- Get session: `GET /v1/kyc/sessions/{sessionId}`
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
