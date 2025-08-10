@@ -8,9 +8,11 @@ Base host: `https://api.verisecid.com`
 
 ## Authentication
 
-- Header: `Authorization: Bearer <public_api_key>`
-- The public key corresponds to a user record in Firestore `users` collection at `users.apiPublicKey` (e.g., `pb-xxxxx`).
-- If the key matches a user, the request is authenticated as that user.
+- Public (workspace) endpoints: `Authorization: Bearer <public_api_key>`
+  - The public key corresponds to a user record in Firestore `users.apiPublicKey` (e.g., `pb-xxxxx`).
+  - If the key matches a user, the request is authenticated as that user.
+- Direct verification endpoint: `Authorization: Bearer <secret_key>`
+  - The secret key can match either `users.apiSecretKey` or `workspaces.apiSecretKey`.
 
 ## Data model overview
 
@@ -133,6 +135,60 @@ Example:
 ```bash
 curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
   -H "Authorization: Bearer pb-YourPublicKey"
+```
+
+---
+
+## Direct verification (non-session)
+
+POST `/api/v1/kyc/verify`
+
+- Auth required: `Authorization: Bearer <secret_key>` (user or workspace secret)
+- CORS: `POST, OPTIONS`
+- Content-Type: `application/json`
+
+Request body:
+
+```json
+{
+  "sessionId": "optional-custom-id",
+  "expectedDocumentType": "passport", // or "id-card"
+  "documentFrontBase64": "<base64 or null>",
+  "documentBackBase64": "<base64 or null>",
+  "selfieBase64s": ["<base64>", "<base64>", "<base64>"]
+}
+```
+
+Successful response (200):
+
+```json
+{
+  "sessionId": "generated-or-provided",
+  "status": "completed" | "failed",
+  "result": { /* KycVerificationResult */ },
+  "verificationUrl": "https://<host>/verify/<sessionId>"
+}
+```
+
+Error responses:
+
+- 401 {"error":"missing_authorization"} when header is absent
+- 401 {"error":"invalid_credentials"} when secret key is invalid
+- 415 {"error":"unsupported_media_type"} if not `application/json`
+- 400 {"error":"invalid_request"} for malformed input
+- 500 {"error":"internal_error","message":"..."} on server error
+
+Example:
+
+```bash
+curl -X POST "https://api.verisecid.com/api/v1/kyc/verify" \
+  -H "Authorization: Bearer sc-YourSecretKey" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "expectedDocumentType": "passport",
+    "documentFrontBase64": "<base64>",
+    "selfieBase64s": ["<base64>"]
+  }'
 ```
 
 ---

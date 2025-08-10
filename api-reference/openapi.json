@@ -70,6 +70,54 @@
         }
       }
     }
+    ,
+    "/api/v1/kyc/verify": {
+      "post": {
+        "summary": "Direct verification (non-session)",
+        "description": "Runs verification directly with provided images. Use your secret key (users.apiSecretKey or workspaces.apiSecretKey).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": { "type": "string", "description": "Optional custom session id" },
+                  "expectedDocumentType": { "type": "string", "enum": ["passport", "id-card"] },
+                  "documentFrontBase64": { "type": ["string", "null"] },
+                  "documentBackBase64": { "type": ["string", "null"] },
+                  "selfieBase64s": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+                },
+                "required": ["expectedDocumentType", "selfieBase64s"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sessionId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["completed", "failed"] },
+                    "result": { "type": "object", "additionalProperties": true },
+                    "verificationUrl": { "type": "string", "format": "uri" }
+                  },
+                  "required": ["sessionId", "status", "result", "verificationUrl"]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
   },
   "components": {
     "securitySchemes": {
@@ -101,6 +149,12 @@
       }
     },
     "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
       "Unauthorized": {
         "description": "Missing or invalid authentication",
         "content": {
@@ -115,6 +169,12 @@
       },
       "NotFound": {
         "description": "Resource not found",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "Unsupported media type",
         "content": {
           "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
         }
