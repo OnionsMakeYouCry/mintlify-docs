@@ -9,9 +9,9 @@ Base host: `https://api.verisecid.com`
 ## Authentication
 
 - Public (workspace) endpoints: `Authorization: Bearer <public_api_key>`
-  - The public key corresponds to a user record in Firestore `users.apiPublicKey` (e.g., `pb-xxxxx`).
-  - If the key matches a user, the request is authenticated as that user.
-- Direct verification endpoint: `Authorization: Bearer <secret_key>`
+  - The public key corresponds to a workspace record in Firestore `workspaces.apiPublicKey` (e.g., `pb-xxxxx`).
+  - If the key matches a workspace, the request is authenticated as that workspace (and its `ownerUserId`).
+- Direct verification endpoint and protected GET: `Authorization: Bearer <secret_key>`
   - The secret key can match either `users.apiSecretKey` or `workspaces.apiSecretKey`.
 
 ## Data model overview
@@ -67,7 +67,7 @@ Successful response (201):
 ```json
 {
   "sessionId": "<session-id>",
-  "verificationUrl": "https://<host>/verify/<session-id>",
+  "verificationUrl": "https://verisecid.com/verify/<session-id>",
   "workspaceId": "<workspace-id>",
   "userId": "<uid>",
   "status": "not_started",
@@ -99,7 +99,7 @@ curl -X POST "https://api.verisecid.com/api/v1/kyc/sessions" \
 
 GET `/api/v1/kyc/sessions/{sessionId}`
 
-- Auth required: `Authorization: Bearer <public_api_key>`
+ - Auth required: `Authorization: Bearer <secret_key>`
 - CORS: `GET, OPTIONS`
 
 Authorization rules:
@@ -118,7 +118,7 @@ Successful response (200):
   "metadata": { "customerId": "12345" },
   "createdAt": "2025-08-09T10:00:00.000Z",
   "updatedAt": "2025-08-09T10:05:00.000Z",
-  "verificationUrl": "https://<host>/verify/<session-id>"
+  "verificationUrl": "https://verisecid.com/verify/<session-id>"
 }
 ```
 
@@ -134,7 +134,7 @@ Example:
 
 ```bash
 curl -X GET "https://api.verisecid.com/api/v1/kyc/sessions/SESSION_ID" \
-  -H "Authorization: Bearer pb-YourPublicKey"
+  -H "Authorization: Bearer sc-YourSecretKey"
 ```
 
 ---
@@ -166,7 +166,7 @@ Successful response (200):
   "sessionId": "generated-or-provided",
   "status": "completed" | "failed",
   "result": { /* KycVerificationResult */ },
-  "verificationUrl": "https://<host>/verify/<sessionId>"
+  "verificationUrl": "https://verisecid.com/verify/<sessionId>"
 }
 ```
 

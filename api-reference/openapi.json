@@ -9,11 +9,16 @@
     { "url": "https://api.verisecid.com" }
   ],
   "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Hosted sessions", "description": "Create and manage hosted verification sessions" },
+    { "name": "Direct verification", "description": "Run verification with provided images using a secret key" }
+  ],
   "paths": {
     "/api/v1/kyc/sessions": {
       "post": {
         "summary": "Create hosted KYC session",
         "description": "Creates a session and returns a verificationUrl to direct users to the hosted verification flow.",
+        "tags": ["Hosted sessions"],
         "requestBody": {
           "required": false,
           "content": {
@@ -46,6 +51,7 @@
       "get": {
         "summary": "Get hosted KYC session",
         "description": "Returns a session by ID when owned by the requesting user or their workspace.",
+        "tags": ["Hosted sessions"],
         "parameters": [
           {
             "name": "sessionId",
@@ -75,6 +81,7 @@
       "post": {
         "summary": "Direct verification (non-session)",
         "description": "Runs verification directly with provided images. Use your secret key (users.apiSecretKey or workspaces.apiSecretKey).",
+        "tags": ["Direct verification"],
         "requestBody": {
           "required": true,
           "content": {
