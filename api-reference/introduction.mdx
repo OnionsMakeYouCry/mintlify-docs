@@ -13,13 +13,20 @@ See Mintlify’s playground guide for details: [API Playground Overview](https:/
 
 ## Authentication
 
-All endpoints require a Bearer token with your public API key.
+- Create session uses your public key (workspace):
 
 ```http
 Authorization: Bearer pb-YourPublicKey
 ```
 
+- Get session and Direct verification use your secret key (user or workspace):
+
+```http
+Authorization: Bearer sc-YourSecretKey
+```
+
 ## Endpoints
 
-- Create session: `POST /v1/kyc/sessions`
-- Get session: `GET /v1/kyc/sessions/{sessionId}`
+- Create session (public key): `POST /v1/kyc/sessions`
+- Get session (secret key): `GET /v1/kyc/sessions/{sessionId}`
+- Direct verification (secret key): `POST /v1/kyc/verify`

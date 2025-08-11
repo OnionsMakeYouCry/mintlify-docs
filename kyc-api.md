@@ -256,6 +256,12 @@ Supported events:
 - `verification.completed` (emitted when a session finishes with pass)
 - `verification.failed` (emitted when a session finishes with fail)
 
+KYC Status field (in addition to legacy status):
+
+- Approved: AI pass and auto-approve enabled
+- Submitted: AI pass and auto-approve disabled (awaiting manual decision)
+- Declined: AI fail, or manual rejection
+
 Delivery semantics:
 
 - Events are filtered by your workspace `webhookEvents` allow-list
@@ -282,10 +288,12 @@ POST requests send a JSON body with this structure:
   "type": "submission.created | verification.completed | verification.failed",
   "id": "<eventType>:<submissionId>",
   "timestamp": "2025-08-10T21:50:43.235Z",
+  "status": "Approved | Submitted | Declined",
   "data": {
     "session": {
       "id": "<sessionId>",
-      "status": "not_started | processing | completed | failed",
+      "status": "Approved | Submitted | Declined",
+      "kycStatus": "not_started | processing | completed | failed",
       "redirectUrl": "https://...",
       "metadata": { },
       "createdAt": { "_seconds": 0, "_nanoseconds": 0 },
@@ -306,6 +314,7 @@ POST requests send a JSON body with this structure:
       "document": { /* structured fields about the document */ },
       "face": { /* structured fields about the face match */ },
       "overall": { "pass": true, "reasons": [], "user_message": null },
+      "kycStatus": "Approved | Submitted | Declined",
       "createdAt": { "_seconds": 0, "_nanoseconds": 0 }
     }
   }

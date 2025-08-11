@@ -51,6 +51,10 @@ Open the `verificationUrl` in a browser or in-app webview. The hosted UI capture
 
 > The API does not expose this verdict directly; persist results in your backend if needed.
 
+<Tip>
+When the session `status` is `processing`, the Verify UI hides the QR code and action buttons and displays “Running on another device.” This prevents duplicate flows if the user already opened the link elsewhere.
+</Tip>
+
 ## Retrieve a session
 
 ```bash
