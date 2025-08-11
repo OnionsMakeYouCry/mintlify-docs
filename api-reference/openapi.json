@@ -222,12 +222,35 @@
           "workspaceId": { "type": "string" },
           "userId": { "type": "string" },
           "status": { "type": "string", "enum": ["not_started", "processing", "completed", "failed"] },
+          "kycStatus": { "type": ["string", "null"], "enum": ["Approved", "Submitted", "Declined", null] },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
           "redirectUrl": { "type": ["string", "null"], "format": "uri" },
           "metadata": { "type": ["object", "null"], "additionalProperties": true },
           "applicantFirstName": { "type": ["string", "null"] },
-          "applicantLastName": { "type": ["string", "null"] }
+          "applicantLastName": { "type": ["string", "null"] },
+          "images": {
+            "type": ["object", "null"],
+            "properties": {
+              "documentFrontPath": { "type": ["string", "null"] },
+              "documentFrontUrl": { "type": ["string", "null"], "format": "uri" },
+              "documentBackPath": { "type": ["string", "null"] },
+              "documentBackUrl": { "type": ["string", "null"], "format": "uri" },
+              "selfiePaths": { "type": "array", "items": { "type": "string" } },
+              "selfieUrls": { "type": "array", "items": { "type": "string", "format": "uri" } }
+            },
+            "additionalProperties": false
+          },
+          "verification": {
+            "type": ["object", "null"],
+            "properties": {
+              "pass": { "type": ["boolean", "null"] },
+              "document": { "type": "object", "additionalProperties": true },
+              "face": { "type": "object", "additionalProperties": true },
+              "overall": { "type": "object", "additionalProperties": true }
+            },
+            "additionalProperties": true
+          }
         },
         "required": ["sessionId", "verificationUrl", "workspaceId", "userId", "status", "createdAt"]
       },

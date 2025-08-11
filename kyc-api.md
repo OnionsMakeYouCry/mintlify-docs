@@ -41,6 +41,11 @@ Firestore collections used by the API:
   - `updatedAt?: Timestamp`
   - `redirectUrl?: string | null`
   - `metadata?: Record<string, unknown> | null`
+  - `applicantFirstName?: string | null`
+  - `applicantLastName?: string | null`
+  - `kycStatus?: "Approved" | "Submitted" | "Declined"` (optional, high-level KYC state)
+  - `images?: { documentFrontPath?: string | null; documentFrontUrl?: string | null; documentBackPath?: string | null; documentBackUrl?: string | null; selfiePaths?: string[]; selfieUrls?: string[] }`
+  - `verification?: { pass?: boolean | null; document?: object; face?: object; overall?: object }` (compact summary)
 
 Prerequisite: a workspace must already exist and contain API keys (`apiPublicKey`, `apiSecretKey`). No default workspace is created by the API.
 
@@ -116,13 +121,37 @@ Successful response (200):
 ```json
 {
   "sessionId": "<session-id>",
-  "workspaceId": "<workspace-id>",
   "userId": "<uid>",
-  "status": "not_started",
+  "status": "not_started | processing | completed | failed",
+  "kycStatus": "Approved | Submitted | Declined",
   "redirectUrl": null,
   "metadata": { "customerId": "12345" },
+  "applicantFirstName": "Jane",
+  "applicantLastName": "Doe",
   "createdAt": "2025-08-09T10:00:00.000Z",
   "updatedAt": "2025-08-09T10:05:00.000Z",
+  "images": {
+    "documentFrontPath": "kyc_sessions/<sessionId>/document_front.jpg",
+    "documentFrontUrl": "https://.../document_front.jpg",
+    "documentBackPath": "kyc_sessions/<sessionId>/document_back.jpg",
+    "documentBackUrl": "https://.../document_back.jpg",
+    "selfiePaths": [
+      "kyc_sessions/<sessionId>/selfies/1.jpg",
+      "kyc_sessions/<sessionId>/selfies/2.jpg",
+      "kyc_sessions/<sessionId>/selfies/3.jpg"
+    ],
+    "selfieUrls": [
+      "https://.../selfies/1.jpg",
+      "https://.../selfies/2.jpg",
+      "https://.../selfies/3.jpg"
+    ]
+  },
+  "verification": {
+    "pass": true,
+    "document": { "detected_type": "id-card", "probability": 0.9, "extracted_fields": { "full_name": "..." } },
+    "face": { "match_probability": 0.8, "used_frames": 3 },
+    "overall": { "pass": true, "reasons": [], "user_message": null }
+  },
   "verificationUrl": "https://verisecid.com/verify/<session-id>"
 }
 ```
