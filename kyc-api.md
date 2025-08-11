@@ -59,7 +59,9 @@ Request body (optional):
 ```json
 {
   "redirectUrl": "https://yourapp.com/kyc/return",
-  "metadata": { "customerId": "12345" }
+  "metadata": { "customerId": "12345" },
+  "firstName": "Jane",
+  "lastName": "Doe"
 }
 ```
 
@@ -72,7 +74,9 @@ Successful response (201):
   "workspaceId": "<workspace-id>",
   "userId": "<uid>",
   "status": "not_started",
-  "createdAt": "2025-08-09T10:00:00.000Z"
+  "createdAt": "2025-08-09T10:00:00.000Z",
+  "applicantFirstName": "Jane",
+  "applicantLastName": "Doe"
 }
 ```
 

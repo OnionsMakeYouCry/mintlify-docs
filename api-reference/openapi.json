@@ -28,7 +28,9 @@
                 "type": "object",
                 "properties": {
                   "redirectUrl": { "type": "string", "format": "uri" },
-                  "metadata": { "type": "object", "additionalProperties": true }
+                  "metadata": { "type": "object", "additionalProperties": true },
+                  "firstName": { "type": "string", "description": "Applicant first name" },
+                  "lastName": { "type": "string", "description": "Applicant last name" }
                 }
               }
             }
@@ -223,7 +225,9 @@
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
           "redirectUrl": { "type": ["string", "null"], "format": "uri" },
-          "metadata": { "type": ["object", "null"], "additionalProperties": true }
+          "metadata": { "type": ["object", "null"], "additionalProperties": true },
+          "applicantFirstName": { "type": ["string", "null"] },
+          "applicantLastName": { "type": ["string", "null"] }
         },
         "required": ["sessionId", "verificationUrl", "workspaceId", "userId", "status", "createdAt"]
       },

@@ -8,7 +8,7 @@ description: "Understand the hosted KYC flow and how to integrate it"
 
 ## Authentication
 
-Use your public API key in the Authorization header. Public keys map to users in Firestore at `users.apiPublicKey`.
+Use your public API key in the Authorization header. Public keys map to workspaces in Firestore at `workspaces.apiPublicKey`.
 
 ```http
 Authorization: Bearer pb-YourPublicKey
@@ -24,7 +24,9 @@ curl -X POST "https://api.verisecid.com/v1/kyc/sessions" \
   -H "Content-Type: application/json" \
   -d '{
     "redirectUrl": "https://yourapp.com/kyc/return",
-    "metadata": { "customerId": "12345" }
+    "metadata": { "customerId": "12345" },
+    "firstName": "Jane",
+    "lastName": "Doe"
   }'
 ```
 
@@ -37,7 +39,9 @@ Successful response (201):
   "workspaceId": "<workspace-id>",
   "userId": "<uid>",
   "status": "not_started",
-  "createdAt": "2025-08-09T10:00:00.000Z"
+  "createdAt": "2025-08-09T10:00:00.000Z",
+  "applicantFirstName": "Jane",
+  "applicantLastName": "Doe"
 }
 ```
 
@@ -51,7 +55,7 @@ Open the `verificationUrl` in a browser or in-app webview. The hosted UI capture
 
 ```bash
 curl -X GET "https://api.verisecid.com/v1/kyc/sessions/SESSION_ID" \
-  -H "Authorization: Bearer pb-YourPublicKey"
+  -H "Authorization: Bearer sc-YourSecretKey"
 ```
 
 Example response:
