@@ -15,6 +15,53 @@ Base host: `https://api.verisecid.com`
 - Direct verification endpoint and protected GET: `Authorization: Bearer <secret_key>`
   - The secret key can match either `users.apiSecretKey` or `workspaces.apiSecretKey`.
 
+---
+
+## Direct verification (server-to-server)
+
+POST `/api/v1/kyc/direct`
+
+- Auth required: `Authorization: Bearer <secret_key>`
+- Content-Type: `application/json`
+
+This endpoint allows you to perform full KYC verification directly by sending Base64-encoded images. The system will:
+1. Process the images using our AI engine.
+2. Persist the result as a Submission in your dashboard.
+3. Return the full analysis immediately.
+
+**Request Body:**
+
+```json
+{
+  "sessionId": "optional-custom-id",
+  "expectedDocumentType": "passport", // or "id-card"
+  "documentFrontBase64": "base64_string...",
+  "documentBackBase64": null, // Optional for passport
+  "selfieBase64s": ["base64_string..."],
+  "applicantFirstName": "John", // Optional
+  "applicantLastName": "Doe",   // Optional
+  "metadata": { "userId": "123" }
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "sessionId": "direct_...",
+  "status": "completed",
+  "kycStatus": "Approved",
+  "result": {
+    "document": { ... },
+    "face": { ... },
+    "overall": { "pass": true }
+  },
+  "verificationUrl": "https://verisecid.com/verify/..."
+}
+```
+
+---
+
 ## Data model overview
 
 Firestore collections used by the API:

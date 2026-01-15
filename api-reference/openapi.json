@@ -80,6 +80,58 @@
       }
     }
     ,
+    "/v1/kyc/direct": {
+      "post": {
+        "summary": "Direct verification (v2)",
+        "description": "Run full verification directly with provided images. Persists result to submissions and returns full analysis.",
+        "tags": ["Direct verification"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": { "type": "string", "description": "Optional custom session id" },
+                  "expectedDocumentType": { "type": "string", "enum": ["passport", "id-card"] },
+                  "documentFrontBase64": { "type": ["string", "null"] },
+                  "documentBackBase64": { "type": ["string", "null"] },
+                  "selfieBase64s": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                  "applicantFirstName": { "type": ["string", "null"] },
+                  "applicantLastName": { "type": ["string", "null"] },
+                  "metadata": { "type": "object", "additionalProperties": true }
+                },
+                "required": ["expectedDocumentType", "documentFrontBase64"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sessionId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["completed", "failed"] },
+                    "kycStatus": { "type": "string", "enum": ["Approved", "Declined"] },
+                    "result": { "type": "object", "additionalProperties": true },
+                    "verificationUrl": { "type": "string", "format": "uri" }
+                  },
+                  "required": ["sessionId", "status", "kycStatus", "result", "verificationUrl"]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "415": { "$ref": "#/components/responses/UnsupportedMediaType" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
     "/v1/kyc/verify": {
       "post": {
         "summary": "Direct verification (non-session)",
