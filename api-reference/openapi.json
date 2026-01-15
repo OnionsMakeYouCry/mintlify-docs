@@ -229,6 +229,25 @@
           "metadata": { "type": ["object", "null"], "additionalProperties": true },
           "applicantFirstName": { "type": ["string", "null"] },
           "applicantLastName": { "type": ["string", "null"] },
+          "applicant": { "type": ["string", "null"], "description": "Full applicant name" },
+          "detectedDocumentType": { "type": ["string", "null"] },
+          "expectedDocumentType": { "type": ["string", "null"] },
+          "retryAttempt": { "type": "integer", "description": "Number of retry attempts" },
+          "document": {
+            "type": ["object", "null"],
+            "description": "Extracted document details and scores",
+            "additionalProperties": true
+          },
+          "face": {
+            "type": ["object", "null"],
+            "description": "Face match details",
+            "additionalProperties": true
+          },
+          "overall": {
+            "type": ["object", "null"],
+            "description": "Overall verification result",
+            "additionalProperties": true
+          },
           "images": {
             "type": ["object", "null"],
             "properties": {
